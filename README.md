@@ -1,0 +1,2 @@
+# astrbot_plugin_touchtorepeat
+戳一戳时重复群内最新消息

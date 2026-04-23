@@ -24,7 +24,8 @@ class TouchToRepeatPlugin(Star):
         logger.info(f"仓库地址: https://github.com/reallysilky/astrbot_plugin_touchtorepeat")
         logger.info("=" * 50)
 
-    async def on_message_handler(self, event: AstrMessageEvent):
+    @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE)
+    async def on_message(self, event: AstrMessageEvent):
         """统一消息入口：记录并处理所有事件"""
         
         # 1. 【调试日志】记录收到的事件原始结构

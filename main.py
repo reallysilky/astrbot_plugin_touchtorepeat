@@ -3,7 +3,13 @@ from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 from collections import defaultdict
 
-@register("touchtorepeat", "YourName", "戳一戳时重复群内最新消息", "v1.0.2")
+@register(
+            "astrbot_plugin_touchtorepeat",
+           "reallysilky",
+            "戳一戳时重复群内最新消息",
+            "v1.0.0",
+            "https://github.com/reallysilky/astrbot_plugin_touchtorepeat"
+)
 class TouchToRepeatPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)

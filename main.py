@@ -24,6 +24,8 @@ class TouchToRepeatPlugin(Star):
     async def on_message_handler(self, event: AstrMessageEvent):
         """监听所有消息事件（包括普通消息和通知事件）"""
         
+
+        logger.info(f"touchtorepeat已接受群内消息")
         # 获取消息原始数据
         raw_message = event.message_obj.raw_message
         
@@ -46,7 +48,7 @@ class TouchToRepeatPlugin(Star):
                         'sender_id': event.get_sender_id(),
                         'time': raw_message.get('time')
                     }
-                    logger.debug(f"缓存群 {group_id} 的最新消息: {message_content[:50]}")
+                    logger.info(f"缓存群 {group_id} 的最新消息: {message_content[:50]}")
         
         # ========== 处理戳一戳事件 ==========
         elif post_type == 'notice':

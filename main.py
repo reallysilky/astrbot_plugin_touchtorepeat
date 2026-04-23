@@ -2,13 +2,12 @@ from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 from collections import defaultdict
-import json
 
 @register(
     "astrbot_plugin_touchtorepeat",
     "reallysilky",
-    "戳一戳时重复群内最新消息（完全调试版）",
-    "v1.0.1-debug", # 更新版本号以示区别
+    "戳一戳时重复群内最新消息",
+    "v1.0.1", # 更新版本号以示区别
     "https://github.com/reallysilky/astrbot_plugin_touchtorepeat"
 )
 class TouchToRepeatPlugin(Star):
@@ -19,43 +18,23 @@ class TouchToRepeatPlugin(Star):
         
         # 启动调试日志
         logger.info("=" * 50)
-        logger.info("【调试版】Touchtorepeat 插件初始化完成")
-        logger.info(f"插件作者: reallysilky")
-        logger.info(f"仓库地址: https://github.com/reallysilky/astrbot_plugin_touchtorepeat")
+        logger.info(" Touchtorepeat 插件初始化完成")
         logger.info("=" * 50)
 
     @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE)
     async def on_message(self, event: AstrMessageEvent):
         """统一消息入口：记录并处理所有事件"""
         
-        # 1. 【调试日志】记录收到的事件原始结构
+        #记录收到的事件原始结构
         raw_message = event.message_obj.raw_message
         post_type = raw_message.get('post_type')
         
-        logger.info(f"【调试】收到事件 | post_type: {post_type}")
-        # 为了调试，打印出原始消息的关键结构（避免日志过长，仅打印部分）
-        try:
-            simplified = {
-                'post_type': post_type,
-                'notice_type': raw_message.get('notice_type'),
-                'sub_type': raw_message.get('sub_type'),
-                'group_id': raw_message.get('group_id'),
-                'user_id': raw_message.get('user_id'),
-                'target_id': raw_message.get('target_id'),
-                'self_id': raw_message.get('self_id'),
-            }
-            logger.debug(f"【调试】事件关键字段: {json.dumps(simplified, ensure_ascii=False)}")
-        except Exception as e:
-            logger.error(f"【调试】解析事件字段失败: {e}")
-
-        # ========== 2. 处理普通消息（用于缓存）==========
+        # ========== 处理普通消息（用于缓存）==========
         if post_type == 'message':
             group_id = raw_message.get('group_id')
-            logger.info(f"【调试-消息】进入消息分支 | group_id: {group_id}")
             
             if group_id:
                 message_content = event.message_str
-                logger.info(f"【调试-消息】原始内容: '{message_content}'")
                 
                 # 忽略命令消息和空消息
                 if message_content and not message_content.startswith('/'):
@@ -68,22 +47,15 @@ class TouchToRepeatPlugin(Star):
                     }
                     self.latest_messages[group_id] = cached_info
                     
-                    logger.info(f"✅ 【缓存成功】群 {group_id} | 发送者: {cached_info['sender_name']}({cached_info['sender_id']})")
+                    logger.info(f"✅ 【缓存成功】群 {group_id} ")
                     logger.info(f"   消息内容: {message_content[:100]}")
                 else:
-                    if not message_content:
-                        logger.info(f"⚠️ 【缓存跳过】群 {group_id} 消息为空，不缓存")
-                    elif message_content.startswith('/'):
-                        logger.info(f"⚠️ 【缓存跳过】群 {group_id} 消息以 '/' 开头，视为命令，不缓存")
-            else:
-                logger.info(f"【调试-消息】非群聊消息（可能是私聊），忽略缓存")
+                    logger.info(f"⚠️ 【缓存跳过】群 {group_id} 消息为空或以 '/' 开头，不缓存")
         
         # ========== 3. 处理戳一戳事件 ==========
         elif post_type == 'notice':
             notice_type = raw_message.get('notice_type')
             sub_type = raw_message.get('sub_type')
-            
-            logger.info(f"【调试-通知】notice_type: {notice_type}, sub_type: {sub_type}")
             
             # 判断是否为戳一戳事件
             if notice_type == 'notify' and sub_type == 'poke':
@@ -94,7 +66,7 @@ class TouchToRepeatPlugin(Star):
                 user_id = raw_message.get('user_id')
                 bot_id = raw_message.get('self_id')
                 
-                logger.info(f"【戳一戳详情】群: {group_id} | 戳人者: {user_id} | 被戳者(target): {target_id} | 机器人自身(self): {bot_id}")
+                logger.info(f"【戳一戳详情】群: {group_id} | 戳人者: {user_id} | 被戳者(target): {target_id} ")
                 
                 # 只响应群聊中戳机器人的事件
                 if group_id and str(target_id) == str(bot_id):
@@ -105,8 +77,6 @@ class TouchToRepeatPlugin(Star):
                     
                     if latest and latest.get('content'):
                         reply_msg = latest['content']
-                        logger.info(f"📤 【准备回复】内容: '{reply_msg}'")
-                        logger.info(f"   消息来自: {latest['sender_name']}({latest['sender_id']})，缓存时间戳: {latest.get('time')}")
                         
                         yield event.plain_result(reply_msg)
                         logger.info(f"✅ 【回复成功】已向群 {group_id} 发送重复消息")
@@ -116,14 +86,11 @@ class TouchToRepeatPlugin(Star):
                         yield event.plain_result(no_cache_msg)
                 else:
                     logger.info(f"❌ 【条件不满足】不是戳机器人的事件，忽略")
-                    if not group_id:
-                        logger.info(f"   原因: 非群聊戳一戳")
-                    elif str(target_id) != str(bot_id):
-                        logger.info(f"   原因: 戳的不是机器人 (target={target_id}, bot={bot_id})")
+
             else:
-                logger.info(f"【调试-通知】非戳一戳通知事件，忽略")
+                logger.info(f"非戳一戳通知事件，忽略")
         else:
-            logger.info(f"【调试】未知的 post_type: {post_type}，本插件不处理")
+            logger.info(f"未知的 post_type: {post_type}，本插件不处理")
 
     async def terminate(self):
         """插件卸载时清理缓存"""

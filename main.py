@@ -4,17 +4,22 @@ from astrbot.api import logger
 from collections import defaultdict
 
 @register(
-            "astrbot_plugin_touchtorepeat",
-           "reallysilky",
-            "戳一戳时重复群内最新消息",
-            "v1.0.0",
-            "https://github.com/reallysilky/astrbot_plugin_touchtorepeat"
+    "astrbot_plugin_touchtorepeat",
+    "reallysilky",
+    "戳一戳时重复群内最新消息",
+    "v1.0.0",
+    "https://github.com/reallysilky/astrbot_plugin_touchtorepeat"
 )
 class TouchToRepeatPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
+
+        logger.info("=" * 40)
+        logger.info("Touchtorepeat 插件正在启动...")
+
         # 存储每个群的最新消息
         self.latest_messages = defaultdict(dict)
+
 
     async def on_message_handler(self, event: AstrMessageEvent):
         """监听所有消息事件（包括普通消息和通知事件）"""
